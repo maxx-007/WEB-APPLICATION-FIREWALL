@@ -1,0 +1,28 @@
+{
+  "name": "waf",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maxx-007/WEB-APPLICATION-FIREWALL.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/maxx-007/WEB-APPLICATION-FIREWALL/issues"
+  },
+  "homepage": "https://github.com/maxx-007/WEB-APPLICATION-FIREWALL#readme",
+  "description": "",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "mongoose": "^8.13.1",
+    "mysql2": "^3.14.0"
+  }
+}
