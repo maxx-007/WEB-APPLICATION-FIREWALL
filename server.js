@@ -5,6 +5,7 @@ require('dotenv').config();
 const firewallMiddleware = require('./middleware/firewall');
 const app = express();
 
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 // Database Connections
 require('./config/dbMySQL');
 require('./config/dbMongo');
