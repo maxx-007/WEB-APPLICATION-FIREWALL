@@ -1,0 +1,490 @@
+/* WAFLogin.css */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap');
+
+:root {
+  --primary: #00f0ff;
+  --primary-glow: rgba(0, 240, 255, 0.6);
+  --secondary: #ff3864;
+  --dark: #090a1a;
+  --darker: #05060f;
+  --light: #e0e0ff;
+  --grid: rgba(0, 240, 255, 0.1);
+  --grid-bright: rgba(0, 240, 255, 0.4);
+}
+
+.waf-login-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+  background-color: var(--darker);
+  overflow: hidden;
+  font-family: 'Orbitron', sans-serif;
+}
+
+/* Grid background */
+.grid-background {
+  position: absolute;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+  width: 150%;
+  height: 150%;
+  top: -25%;
+  left: -25%;
+  transform: perspective(500px) rotateX(30deg);
+  z-index: 0;
+}
+
+.grid-cell {
+  border: 1px solid var(--grid);
+  opacity: 0;
+  transition: all 0.5s ease;
+}
+
+.grid-cell.active {
+  opacity: 1;
+  animation: pulse 8s infinite alternate;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    border-color: var(--grid);
+  }
+  50% {
+    border-color: var(--grid-bright);
+  }
+}
+
+/* Scan lines effect */
+.scan-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    rgba(0, 0, 0, 0.05) 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+.scan-lines::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.1),
+    rgba(0, 0, 0, 0),
+    rgba(0, 0, 0, 0.1)
+  );
+  animation: scanline 8s linear infinite;
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+/* Login box */
+.login-box {
+  position: relative;
+  width: 420px;
+  padding: 40px;
+  background-color: rgba(12, 15, 35, 0.85);
+  border-radius: 8px;
+  box-shadow: 0 0 30px var(--primary-glow),
+              inset 0 0 20px rgba(0, 0, 0, 0.8);
+  z-index: 5;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  animation: loginAppear 1s ease-out forwards;
+}
+
+@keyframes loginAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-box::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, var(--primary), transparent, var(--primary));
+  border-radius: 10px;
+  z-index: -1;
+  opacity: 0.4;
+  animation: borderGlow 4s linear infinite;
+}
+
+@keyframes borderGlow {
+  0% {
+    filter: hue-rotate(0deg) brightness(1);
+  }
+  50% {
+    filter: hue-rotate(45deg) brightness(1.2);
+  }
+  100% {
+    filter: hue-rotate(0deg) brightness(1);
+  }
+}
+
+/* Login header */
+.login-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.shield-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 15px;
+  filter: drop-shadow(0 0 8px var(--primary-glow));
+  animation: iconPulse 2s infinite alternate;
+}
+
+@keyframes iconPulse {
+  from {
+    filter: drop-shadow(0 0 5px var(--primary-glow));
+  }
+  to {
+    filter: drop-shadow(0 0 15px var(--primary-glow));
+  }
+}
+
+.login-title {
+  color: white;
+  font-size: 2rem;
+  font-weight: 900;
+  margin: 0;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px var(--primary-glow);
+}
+
+.login-title .highlight {
+  color: var(--primary);
+}
+
+.login-subtitle {
+  color: var(--light);
+  font-size: 0.85rem;
+  margin-top: 5px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* Form styles */
+form {
+  margin-top: 20px;
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--light);
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.input-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding: 12px 15px;
+  background-color: rgba(0, 10, 30, 0.6);
+  border: none;
+  border-radius: 4px;
+  color: var(--primary);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.input-wrapper input:focus {
+  background-color: rgba(0, 20, 50, 0.8);
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.input-border {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--light));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+  transform-origin: left;
+}
+
+.input-wrapper input:focus + .input-border {
+  transform: scaleX(1);
+}
+
+/* Login button */
+.login-button {
+  position: relative;
+  width: 100%;
+  padding: 14px 20px;
+  background-color: transparent;
+  border: 1px solid var(--primary);
+  border-radius: 4px;
+  color: var(--primary);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.login-button:hover {
+  background-color: rgba(0, 240, 255, 0.1);
+}
+
+.login-button:active {
+  transform: scale(0.98);
+}
+
+.button-text {
+  position: relative;
+  z-index: 2;
+}
+
+.button-glow {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+  opacity: 0;
+  z-index: 1;
+  transition: opacity 0.3s ease;
+}
+
+.login-button:hover .button-glow {
+  opacity: 0.6;
+  animation: buttonGlow 2s infinite;
+}
+
+@keyframes buttonGlow {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Login message */
+.login-message {
+  margin-top: 20px;
+  padding: 10px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-left: 3px solid var(--primary);
+}
+
+.terminal-text {
+  color: var(--primary);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Loading spinner */
+.loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.loader .circle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  animation: loaderBlink 1.4s infinite;
+}
+
+.loader .circle:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loader .circle:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes loaderBlink {
+  0%, 50%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* Security status indicator */
+.security-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 10px 0;
+  font-size: 0.75rem;
+  color: #a0e0e0;
+  letter-spacing: 1px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  animation: statusPulse 2s infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 5px var(--primary);
+  }
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 0 10px var(--primary);
+  }
+}
+
+/* Hexagon decorations */
+.hexagon-decoration {
+  position: absolute;
+  width: 100px;
+  height: 115px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: linear-gradient(45deg, var(--primary), transparent);
+  opacity: 0.1;
+  z-index: 1;
+}
+
+.hex1 {
+  top: 10%;
+  right: 15%;
+  transform: rotate(20deg) scale(2);
+  animation: hexFloat 20s infinite alternate;
+}
+
+.hex2 {
+  bottom: 20%;
+  left: 10%;
+  transform: rotate(-15deg) scale(1.5);
+  animation: hexFloat 15s infinite alternate-reverse;
+}
+
+.hex3 {
+  top: 50%;
+  right: 5%;
+  transform: rotate(45deg) scale(1);
+  animation: hexFloat 25s infinite alternate;
+}
+
+@keyframes hexFloat {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-20px) rotate(10deg);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .login-box {
+    width: 90%;
+    padding: 30px 20px;
+  }
+  
+  .login-title {
+    font-size: 1.5rem;
+  }
+}
+
+.error-message {
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: rgba(30, 0, 0, 0.3);
+    border-left: 3px solid var(--secondary);
+    animation: errorAppear 0.3s ease-out;
+  }
+  
+  @keyframes errorAppear {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .terminal-text.error {
+    color: var(--secondary);
+  }
