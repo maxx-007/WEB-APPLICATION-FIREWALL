@@ -19,13 +19,19 @@ export const setAuthToken = (token) => {
 
 // Function to fetch firewall rules
 export const fetchFirewallRules = async () => {
-    try {
-        const response = await api.get(`/firewall/rules`);
-        return response.data;
-    } catch (error) {
-        console.error("Error fetching firewall rules:", error);
-        throw error; // Throw error so component can handle it
-    }
+  try {
+      // Make sure token is set before making request
+      const token = localStorage.getItem('authToken');
+      if (token) {
+          setAuthToken(token);
+      }
+      
+      const response = await api.get(`/firewall/rules`);
+      return response.data;
+  } catch (error) {
+      console.error("Error fetching firewall rules:", error);
+      throw error;
+  }
 };
 
 // Function to add a new firewall rule

@@ -1,21 +1,29 @@
 const express = require('express');
+const db = require('./config/dbMySQL'); // Adjust the path if necessary
 const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
-const firewallMiddleware = require('./middleware/firewall');
+const { firewallMiddleware, limiter }= require('./middleware/firewall');
 const app = express();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
-
+const router = express.Router();
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 // Database Connections
 require('./config/dbMySQL');
 require('./config/dbMongo');
 
+
+
+
+
+
+
+
 // Middleware Setup
 app.use(bodyParser.json());
-
+app.use(limiter);
 // Apply firewall middleware globally
 app.use(firewallMiddleware);
 
@@ -206,6 +214,25 @@ app.get("/verify-token", authMiddleware, (req, res) => {
     });
 });
 
+app.get("/api/firewall-rules", (req, res) => {
+    db.query("SELECT * FROM firewall_rules", (err, results) => {
+        if (err) {
+            console.error("❌ Error fetching firewall rules:", err);
+            return res.status(500).json({ error: "Internal Server Error" });
+        }
+        res.json(results);
+    });
+});
+
+router.get("/api/firewall-rules", async (req, res) => {
+    try {
+        const [rules] = await db.promise().query("SELECT * FROM firewall_rules");
+        res.json(rules);
+    } catch (err) {
+        res.status(500).json({ error: "Database Error", details: err.message });
+    }
+});
+
 // User Management Routes (for admin)
 app.post("/users", authMiddleware, adminMiddleware, async (req, res) => {
     const { username, password, role } = req.body;
@@ -289,6 +316,12 @@ app.post("/logout", (req, res) => {
 
 // Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
+    try {
+        await db.query("SELECT 1"); // Test MySQL connection
+        console.log("✅ MySQL Connected...");
+    } catch (error) {
+        console.error("❌ MySQL Connection Error:", error);
+    }
 });

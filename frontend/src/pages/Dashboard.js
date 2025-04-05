@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { fetchFirewallRules, addFirewallRule, deleteFirewallRule, logout } from "../services/api";
+import { fetchFirewallRules, addFirewallRule, deleteFirewallRule, logout, setAuthToken } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import * as THREE from 'three';
 import { 
@@ -26,6 +26,9 @@ const Dashboard = () => {
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
     const animationFrameRef = useRef(null);
+    const [error, setError] = useState("");
+    const [showAddForm, setShowAddForm] = useState(false);
+
     
     // Terminal effect text
     const terminalMessages = [
@@ -273,27 +276,30 @@ const Dashboard = () => {
 
     // Handle adding a new rule
     const handleAddRule = async (e) => {
-        e.preventDefault();
-        if (!newRuleName || !newRulePattern) return;
-
-        try {
-            const newRule = await addFirewallRule(newRuleName, newRulePattern);
-            if (newRule) {
-                // Create a temporary unique ID if server doesn't provide one
-                const ruleWithId = newRule.id ? newRule : {...newRule, id: `temp-${Date.now()}`};
-                setRules([...rules, ruleWithId]);
-                setNewRuleName("");
-                setNewRulePattern("");
-                
-                // Play digital sound effect for successful rule addition
-                playDigitalSound(440, 0.1); // A note
-                setTimeout(() => playDigitalSound(554, 0.1), 150); // C# note
-            }
-        } catch (error) {
-            console.error("Failed to add rule:", error);
-            // Error sound
-            playDigitalSound(220, 0.2);
+      e.preventDefault();
+      if (!newRuleName || !newRulePattern) return;
+    
+      try {
+        // Create a rule object instead of passing separate parameters
+        const ruleData = {
+          rule_name: newRuleName,
+          rule_pattern: newRulePattern
+        };
+        
+        const newRule = await addFirewallRule(ruleData);
+        
+        if (newRule) {
+          // Create a temporary unique ID if server doesn't provide one
+          const ruleWithId = newRule.id ? newRule : {...newRule, id: `temp-${Date.now()}`};
+          setRules([...rules, ruleWithId]);
+          setNewRuleName("");
+          setNewRulePattern("");
+          setShowAddForm(false);
         }
+      } catch (error) {
+        console.error("Failed to add rule:", error);
+        setError("Failed to add new rule. Please try again.");
+      }
     };
     
     // Handle rule deletion
@@ -314,22 +320,33 @@ const Dashboard = () => {
 
     // Handle logout
     const handleLogout = async () => {
-        try {
-            await logout();
-            localStorage.removeItem("authToken");
-            
-            // Logout animation sequence
-            playDigitalSound(660, 0.1);
-            setTimeout(() => playDigitalSound(550, 0.1), 100);
-            setTimeout(() => playDigitalSound(440, 0.1), 200);
-            setTimeout(() => playDigitalSound(330, 0.1), 300);
-            
-            // Small delay before redirecting for sound to play
-            setTimeout(() => navigate("/login"), 400);
-        } catch (error) {
-            console.error("Logout failed:", error);
-        }
-    };
+      try {
+          // Play digital sound effects first
+          playDigitalSound(660, 0.1);
+          setTimeout(() => playDigitalSound(550, 0.1), 100);
+          setTimeout(() => playDigitalSound(440, 0.1), 200);
+          setTimeout(() => playDigitalSound(330, 0.1), 300);
+          
+          // Then handle logout logic AFTER sounds finish
+          setTimeout(async () => {
+              // First call the API
+              await logout();
+              
+              // Then remove auth token
+              localStorage.removeItem("authToken");
+              
+              // Update auth state before navigation
+              setAuthToken(null); // This is imported from your services/api
+              
+              // Wait a tiny bit to avoid rapid state changes
+              setTimeout(() => {
+                  navigate("/login");
+              }, 50);
+          }, 400);
+      } catch (error) {
+          console.error("Logout failed:", error);
+      }
+  };
     
     // Simple digital sound effect function
     const playDigitalSound = (frequency, duration) => {
