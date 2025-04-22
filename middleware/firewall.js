@@ -16,8 +16,13 @@ const blockedUserAgents = [
 ];
 
 // 🚀 SQL Injection & XSS Detection Patterns
-const sqlInjectionPatterns = /(\b(union|select|insert|update|delete|drop|alter|create|truncate)\b|--|#|\/\*|\*\/)/i;
-const xssPatterns = /(<script>|javascript:|onerror=|onload=)/i;
+const sqlInjectionPatterns = /(\b(union|select|insert|update|delete|drop|alter|create|truncate)\b|--|#|\/\*|\*\/|'(\s|\+|%20)*or(\s|\+|%20)*'|'(\s|\+|%20)*=(\s|\+|%20)*'|(\s|\+|%20)+and(\s|\+|%20)|(\s|\+|%20)+or(\s|\+|%20)|(\s|\+|%20)+where(\s|\+|%20)|'(\s|\+|%20)*\d+(\s|\+|%20)*'(\s|\+|%20)*=|'(\s|\+|%20)*1(\s|\+|%20)*'(\s|\+|%20)*=)/i;
+
+// More comprehensive XSS detection pattern that includes javascript:alert and similar patterns
+const xssPatterns = /(<script>|<script\s|javascript:|onerror=|onload=|alert\(|onclick=|onmouseover=|eval\(|document\.cookie|document\.location|window\.location)/i;
+
+// Path traversal detection pattern
+const pathTraversalPatterns = /(\.\.\/|\.\.\\|%2e%2e%2f|%252e%252e%252f|\.\.|\/etc\/passwd|\/proc\/self|\/win.ini|c:\\windows|cmd\.exe)/i;
 
 // 🚀 Firewall Middleware Function
 const firewallMiddleware = async (req, res, next) => {
@@ -37,27 +42,34 @@ const firewallMiddleware = async (req, res, next) => {
             }
             if (result.length > 0) {
                 console.warn(`🚨 Blocked request from Blacklisted IP: ${clientIP}`);
-                return res.status(403).json({ message: "🔥 Access Denied: Your IP is blocked." });
+                return res.redirect('/block.html?attack=blacklisted_ip');
             }
 
             // 🚨 Block SQL Injection & XSS Attempts
             if (sqlInjectionPatterns.test(requestPath) || sqlInjectionPatterns.test(requestBody)) {
                 console.warn(`🚨 SQL Injection attempt blocked from ${clientIP}`);
                 await logAttack(clientIP, "SQL Injection", requestPath, userAgent);
-                return res.status(403).json({ message: "🔥 Request Blocked: SQL Injection detected." });
+                return res.redirect('/block.html?attack=sql_injection');
             }
 
             if (xssPatterns.test(requestPath) || xssPatterns.test(requestBody)) {
                 console.warn(`🚨 XSS Attack blocked from ${clientIP}`);
                 await logAttack(clientIP, "XSS Attack", requestPath, userAgent);
-                return res.status(403).json({ message: "🔥 Request Blocked: XSS Attack detected." });
+                return res.redirect('/block.html?attack=xss');
+            }
+
+            // 🚨 Block Path Traversal Attempts
+            if (pathTraversalPatterns.test(requestPath) || pathTraversalPatterns.test(requestBody)) {
+                console.warn(`🚨 Path Traversal attempt blocked from ${clientIP}`);
+                await logAttack(clientIP, "Path Traversal", requestPath, userAgent);
+                return res.redirect('/block.html?attack=path_traversal');
             }
 
             // 🚨 Block Suspicious User-Agents
             if (userAgent && blockedUserAgents.some(agent => userAgent.toLowerCase().includes(agent))) {
                 console.warn(`🚨 Blocked Suspicious User-Agent: ${userAgent}`);
                 await logAttack(clientIP, "Blocked User-Agent", requestPath, userAgent);
-                return res.status(403).json({ message: "🔥 Request Blocked: Suspicious User-Agent detected." });
+                return res.redirect('/block.html?attack=malicious_tool');
             }
 
             // 🚨 Fetch Firewall Rules from MySQL & Apply them
@@ -82,7 +94,7 @@ const firewallMiddleware = async (req, res, next) => {
                 if (blocked) {
                     console.warn(`🚨 Blocked request from ${clientIP} due to rule: ${matchedRule.rule_name}`);
                     await logAttack(clientIP, matchedRule.rule_name, requestPath, userAgent);
-                    return res.status(403).json({ message: "🔥 Request Blocked by Firewall", rule: matchedRule.rule_name });
+                    return res.redirect('/block.html?attack=' + encodeURIComponent(matchedRule.rule_name));
                 }
 
                 // 🚀 Log normal traffic

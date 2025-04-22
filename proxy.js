@@ -841,12 +841,70 @@ app.get('/waf-dashboard', (req, res) => {
   res.send(dashboardHtml);
 });
 
+// Add test search endpoint for XSS demonstration
+app.get('/api/search', (req, res) => {
+  console.log('🔍 Search request received:', req.query);
+  
+  // Get the search query
+  const query = req.query.query || '';
+  
+  // Log the attempt
+  console.log(`🔍 Search query: ${query}`);
+  
+  // If query contains XSS patterns, it will be caught by the firewall middleware
+  // and redirected to block.html before reaching this point
+  
+  // For normal searches, return fake results
+  res.json({
+    success: true,
+    query: query,
+    results: [
+      { id: 1, title: "Sample result 1", description: "This is a sample search result" },
+      { id: 2, title: "Sample result 2", description: "Another search result example" },
+      { id: 3, title: "Sample result 3", description: "Third search result for demonstration" }
+    ]
+  });
+});
+
+// Add test file endpoint for path traversal demonstration
+app.get('/api/files', (req, res) => {
+  console.log('📂 File request received:', req.query);
+  
+  // Get the file path
+  const filePath = req.query.path || '';
+  
+  // Log the attempt
+  console.log(`📂 File path requested: ${filePath}`);
+  
+  // If path contains traversal patterns, it will be caught by the firewall middleware
+  // and redirected to block.html before reaching this point
+  
+  // For normal file requests, return fake file content
+  res.json({
+    success: true,
+    path: filePath,
+    content: "This is a simulated file content for demo purposes only."
+  });
+});
+
 // Apply the proxies to different routes
 app.use('/api', apiProxy); // Match API requests first
 
 // Add login route redirect handler
 app.get('/login', (req, res) => {
-  console.log('Redirecting login route to root');
+  console.log('Checking login request:', req.query);
+  
+  // Check if this is a demo login attempt (SQL injection test)
+  const username = req.query.username || '';
+  const password = req.query.password || '';
+  
+  // Log the attempt with more details
+  console.log(`👤 Login attempt - Username: ${username}, Password: ${password.replace(/./g, '*')}`);
+  
+  // If username contains SQL injection patterns, it will be caught by the firewall middleware
+  // and redirected to block.html before reaching this point
+  
+  // For normal login attempts, redirect to root
   res.redirect('/');
 });
 
@@ -858,563 +916,73 @@ app.get('/favicon.ico', (req, res) => {
   res.status(204).end();
 });
 
-// Add a dedicated WAF admin dashboard route
-app.get('/waf-admin', (req, res) => {
-  console.log('Accessing WAF Admin Dashboard');
-  const wafDashboardHtml = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>WAF Admin Dashboard</title>
-      <style>
-        body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          background-color: #0a0e17;
-          color: #e0e0e0;
-          margin: 0;
-          padding: 0;
-        }
-        .layout {
-          display: flex;
-          height: 100vh;
-        }
-        .sidebar {
-          width: 240px;
-          background-color: #1a2233;
-          box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-          padding: 20px 0;
-        }
-        .sidebar-header {
-          padding: 0 20px 20px;
-          border-bottom: 1px solid #2a3a5a;
-        }
-        .logo {
-          color: #42a5f5;
-          font-size: 24px;
-          font-weight: bold;
-          margin: 0;
-        }
-        .status-indicator {
-          display: flex;
-          align-items: center;
-          margin-top: 10px;
-        }
-        .status-dot {
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          background-color: #4caf50;
-          margin-right: 8px;
-          animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-          0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
-          70% { box-shadow: 0 0 0 5px rgba(76, 175, 80, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
-        }
-        .nav-items {
-          list-style: none;
-          padding: 0;
-          margin: 20px 0;
-        }
-        .nav-item {
-          padding: 10px 20px;
-          cursor: pointer;
-          transition: background-color 0.3s;
-        }
-        .nav-item:hover {
-          background-color: #212c42;
-        }
-        .nav-item.active {
-          background-color: #212c42;
-          border-left: 3px solid #42a5f5;
-        }
-        .nav-item a {
-          color: #e0e0e0;
-          text-decoration: none;
-          display: flex;
-          align-items: center;
-        }
-        .nav-item i {
-          margin-right: 10px;
-          font-size: 18px;
-          width: 24px;
-          text-align: center;
-        }
-        .content {
-          flex: 1;
-          padding: 20px;
-          overflow-y: auto;
-        }
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-        }
-        .page-title {
-          font-size: 24px;
-          margin: 0;
-        }
-        .stats-row {
-          display: flex;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          margin-bottom: 20px;
-        }
-        .stat-card {
-          background-color: #1a2233;
-          border-radius: 8px;
-          padding: 20px;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          width: calc(25% - 20px);
-          margin-bottom: 20px;
-        }
-        .stat-title {
-          color: #7986cb;
-          font-size: 14px;
-          margin-bottom: 8px;
-        }
-        .stat-value {
-          font-size: 28px;
-          font-weight: bold;
-        }
-        .traffic-container {
-          background-color: #1a2233;
-          border-radius: 8px;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          overflow: hidden;
-          margin-bottom: 20px;
-        }
-        .traffic-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 15px 20px;
-          background-color: #212c42;
-          border-bottom: 1px solid #2a3a5a;
-        }
-        .traffic-title {
-          font-size: 18px;
-          color: #42a5f5;
-          margin: 0;
-        }
-        .action-buttons {
-          display: flex;
-          gap: 10px;
-        }
-        .refresh-btn, .filter-btn {
-          background-color: #2a3a5a;
-          color: #e0e0e0;
-          border: none;
-          border-radius: 4px;
-          padding: 8px 15px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          font-size: 14px;
-        }
-        .refresh-btn:hover, .filter-btn:hover {
-          background-color: #3a4a6a;
-        }
-        .refresh-btn i, .filter-btn i {
-          margin-right: 5px;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-        th, td {
-          padding: 12px 15px;
-          text-align: left;
-          border-bottom: 1px solid #2a3a5a;
-        }
-        th {
-          background-color: #212c42;
-          color: #7986cb;
-          font-weight: normal;
-        }
-        tr:hover {
-          background-color: #212c42;
-        }
-        .method {
-          display: inline-block;
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-weight: bold;
-          font-size: 12px;
-        }
-        .get {
-          background-color: #2e7d32;
-          color: white;
-        }
-        .post {
-          background-color: #1565c0;
-          color: white;
-        }
-        .put {
-          background-color: #ff8f00;
-          color: white;
-        }
-        .delete {
-          background-color: #c62828;
-          color: white;
-        }
-        .status-code {
-          font-weight: bold;
-        }
-        .status-200 {
-          color: #4caf50;
-        }
-        .status-300 {
-          color: #2196f3;
-        }
-        .status-400 {
-          color: #ff9800;
-        }
-        .status-500 {
-          color: #f44336;
-        }
-        .timestamp {
-          color: #9e9e9e;
-          font-size: 12px;
-        }
-        .pagination {
-          display: flex;
-          justify-content: center;
-          margin: 20px 0;
-        }
-        .pagination button {
-          background-color: #2a3a5a;
-          color: #e0e0e0;
-          border: none;
-          padding: 8px 15px;
-          margin: 0 5px;
-          cursor: pointer;
-          border-radius: 4px;
-        }
-        .pagination button:hover {
-          background-color: #3a4a6a;
-        }
-        .pagination button:disabled {
-          background-color: #1a2233;
-          color: #666;
-          cursor: not-allowed;
-        }
-        .app-info {
-          background-color: #1a2233;
-          border-radius: 8px;
-          padding: 20px;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          margin-top: 20px;
-        }
-        .app-info h3 {
-          color: #42a5f5;
-          margin-top: 0;
-        }
-        .info-row {
-          display: flex;
-          margin-bottom: 10px;
-        }
-        .info-label {
-          width: 150px;
-          color: #7986cb;
-        }
-        .info-value {
-          flex: 1;
-        }
-        .health-up {
-          color: #4caf50;
-          font-weight: bold;
-        }
-        .health-down {
-          color: #f44336;
-          font-weight: bold;
-        }
-      </style>
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
-    </head>
-    <body>
-      <div class="layout">
-        <div class="sidebar">
-          <div class="sidebar-header">
-            <h1 class="logo">WAF Admin</h1>
-            <div class="status-indicator">
-              <div class="status-dot"></div>
-              <span>WAF Active - Port ${PORT}</span>
-            </div>
-          </div>
-          <ul class="nav-items">
-            <li class="nav-item active">
-              <a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-            </li>
-            <li class="nav-item">
-              <a href="#"><i class="fas fa-exchange-alt"></i> Traffic</a>
-            </li>
-            <li class="nav-item">
-              <a href="#"><i class="fas fa-shield-alt"></i> Security</a>
-            </li>
-            <li class="nav-item">
-              <a href="#"><i class="fas fa-bell"></i> Alerts</a>
-            </li>
-            <li class="nav-item">
-              <a href="#"><i class="fas fa-cog"></i> Settings</a>
-            </li>
-            <li class="nav-item">
-              <a href="/"><i class="fas fa-external-link-alt"></i> CatchPhish App</a>
-            </li>
-          </ul>
-        </div>
-        <div class="content">
-          <div class="header">
-            <h2 class="page-title">WAF Dashboard</h2>
-            <div class="health-indicator" id="health-indicator">Checking health...</div>
-          </div>
-          
-          <div class="stats-row">
-            <div class="stat-card">
-              <div class="stat-title">TOTAL REQUESTS</div>
-              <div class="stat-value" id="total-requests">0</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-title">REQUESTS TODAY</div>
-              <div class="stat-value" id="requests-today">0</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-title">BLOCKED ATTACKS</div>
-              <div class="stat-value" id="blocked-attacks">0</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-title">AVG RESPONSE TIME</div>
-              <div class="stat-value" id="avg-response-time">0 ms</div>
-            </div>
-          </div>
-          
-          <div class="traffic-container">
-            <div class="traffic-header">
-              <h2 class="traffic-title">Live Traffic</h2>
-              <div class="action-buttons">
-                <button class="refresh-btn" id="refresh-btn">
-                  <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-                <button class="filter-btn">
-                  <i class="fas fa-filter"></i> Filter
-                </button>
-              </div>
-            </div>
-            
-            <table>
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>IP Address</th>
-                  <th>Method</th>
-                  <th>Path</th>
-                  <th>Status</th>
-                  <th>Response Time</th>
-                </tr>
-              </thead>
-              <tbody id="traffic-table">
-                <tr>
-                  <td colspan="6" style="text-align: center;">Loading traffic data...</td>
-                </tr>
-              </tbody>
-            </table>
-            
-            <div class="pagination">
-              <button id="prev-page" disabled>Previous</button>
-              <button id="next-page" disabled>Next</button>
-            </div>
-          </div>
-          
-          <div class="app-info" id="app-info">
-            <h3>Protected Application Status</h3>
-            <div class="info-row">
-              <div class="info-label">CatchPhish Frontend:</div>
-              <div class="info-value" id="frontend-status">Checking...</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">CatchPhish API:</div>
-              <div class="info-value" id="api-status">Checking...</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">WAF Uptime:</div>
-              <div class="info-value" id="waf-uptime">Calculating...</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <script>
-        let trafficData = [];
-        let currentPage = 1;
-        const itemsPerPage = 10;
-        
-        function formatTimestamp(timestamp) {
-          const date = new Date(timestamp);
-          return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }
-        
-        function formatDate(timestamp) {
-          const date = new Date(timestamp);
-          return date.toLocaleDateString();
-        }
-        
-        function getStatusClass(status) {
-          if (status >= 500) return 'status-500';
-          if (status >= 400) return 'status-400';
-          if (status >= 300) return 'status-300';
-          return 'status-200';
-        }
-        
-        function getMethodClass(method) {
-          const methodLower = method.toLowerCase();
-          if (methodLower === 'get') return 'get';
-          if (methodLower === 'post') return 'post';
-          if (methodLower === 'put') return 'put';
-          if (methodLower === 'delete') return 'delete';
-          return '';
-        }
-        
-        function updateTrafficTable() {
-          const tableBody = document.getElementById('traffic-table');
-          const startIndex = (currentPage - 1) * itemsPerPage;
-          const endIndex = startIndex + itemsPerPage;
-          const pageData = trafficData.slice(startIndex, endIndex);
-          
-          // Enable/disable pagination buttons
-          document.getElementById('prev-page').disabled = currentPage === 1;
-          document.getElementById('next-page').disabled = endIndex >= trafficData.length;
-          
-          if (pageData.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No traffic data available</td></tr>';
-            return;
-          }
-          
-          let html = '';
-          pageData.forEach(item => {
-            html += '<tr>' +
-              '<td class="timestamp">' + formatTimestamp(item.timestamp) + '</td>' +
-              '<td>' + item.ip + '</td>' +
-              '<td><span class="method ' + getMethodClass(item.method) + '">' + item.method + '</span></td>' +
-              '<td>' + item.path + '</td>' +
-              '<td><span class="status-code ' + getStatusClass(item.status) + '">' + item.status + '</span></td>' +
-              '<td>' + item.responseTime + ' ms</td>' +
-              '</tr>';
-          });
-          
-          tableBody.innerHTML = html;
-        }
-        
-        function updateStats() {
-          document.getElementById('total-requests').textContent = trafficData.length;
-          
-          // Calculate requests today
-          const today = new Date().toDateString();
-          const requestsToday = trafficData.filter(item => 
-            new Date(item.timestamp).toDateString() === today
-          ).length;
-          document.getElementById('requests-today').textContent = requestsToday;
-          
-          // Calculate blocked attacks (status 403)
-          const blockedAttacks = trafficData.filter(item => item.status === 403).length;
-          document.getElementById('blocked-attacks').textContent = blockedAttacks;
-          
-          // Calculate average response time
-          if (trafficData.length > 0) {
-            const totalResponseTime = trafficData.reduce((sum, item) => sum + item.responseTime, 0);
-            const avgResponseTime = Math.round(totalResponseTime / trafficData.length);
-            document.getElementById('avg-response-time').textContent = avgResponseTime + ' ms';
-          }
-        }
-        
-        function fetchTrafficData() {
-          fetch('/waf-traffic')
-            .then(response => response.json())
-            .then(data => {
-              trafficData = data.traffic;
-              updateTrafficTable();
-              updateStats();
-            })
-            .catch(error => {
-              console.error('Error fetching traffic data:', error);
-              document.getElementById('traffic-table').innerHTML = 
-                '<tr><td colspan="6" style="text-align: center;">Error loading traffic data</td></tr>';
-            });
-        }
-        
-        function checkHealth() {
-          fetch('/waf-health')
-            .then(response => response.json())
-            .then(data => {
-              // Update health indicator
-              const healthIndicator = document.getElementById('health-indicator');
-              healthIndicator.textContent = 'WAF Status: ' + data.waf.status;
-              
-              // Update app status
-              document.getElementById('waf-uptime').textContent = data.waf.uptime;
-              
-              // Update frontend status
-              const frontendStatus = document.getElementById('frontend-status');
-              if (data.targets.frontend.status === 'UP') {
-                frontendStatus.innerHTML = '<span class="health-up">Online</span>';
-              } else {
-                frontendStatus.innerHTML = '<span class="health-down">Offline</span> - ' + 
-                  (data.targets.frontend.error || 'Unknown error');
-              }
-              
-              // Update API status
-              const apiStatus = document.getElementById('api-status');
-              if (data.targets.api.status === 'UP') {
-                apiStatus.innerHTML = '<span class="health-up">Online</span>';
-              } else {
-                apiStatus.innerHTML = '<span class="health-down">Offline</span> - ' + 
-                  (data.targets.api.error || 'Unknown error');
-              }
-            })
-            .catch(error => {
-              console.error('Error checking health:', error);
-              document.getElementById('health-indicator').textContent = 'Health check failed';
-            });
-        }
-        
-        // Fetch data on load
-        fetchTrafficData();
-        checkHealth();
-        
-        // Set up auto-refresh timer
-        setInterval(fetchTrafficData, 5000);
-        setInterval(checkHealth, 15000);
-        
-        // Set up manual refresh button
-        document.getElementById('refresh-btn').addEventListener('click', () => {
-          fetchTrafficData();
-          checkHealth();
-        });
-        
-        // Set up pagination
-        document.getElementById('prev-page').addEventListener('click', () => {
-          if (currentPage > 1) {
-            currentPage--;
-            updateTrafficTable();
-          }
-        });
-        
-        document.getElementById('next-page').addEventListener('click', () => {
-          if ((currentPage * itemsPerPage) < trafficData.length) {
-            currentPage++;
-            updateTrafficTable();
-          }
-        });
-      </script>
-    </body>
-    </html>
-  `;
+// Add route for the block page
+app.get('/block.html', (req, res) => {
+  console.log('🚨 Attack blocked, serving block page');
+  const attackType = req.query.attack || 'security_threat';
   
-  res.setHeader('Content-Type', 'text/html');
-  res.send(wafDashboardHtml);
+  // Read the block.html file
+  const fs = require('fs');
+  const path = require('path');
+  const blockHtmlPath = path.join(__dirname, 'frontend', 'src', 'pages', 'BLOCK.html');
+  
+  fs.readFile(blockHtmlPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading block.html:', err);
+      return res.status(403).send('Access Denied: Security Threat Detected');
+    }
+    
+    // Inject the attack type into the page
+    const modifiedHtml = data.replace('<!-- ATTACK_DETAILS -->', `
+      <div class="attack-details">
+        <h3>Attack Details:</h3>
+        <p>Attack Type: ${attackType}</p>
+        <p>Time: ${new Date().toLocaleString()}</p>
+        <p>IP Address: ${req.ip || req.connection.remoteAddress}</p>
+        <p>User Agent: ${req.headers['user-agent'] || 'Unknown'}</p>
+      </div>
+    `);
+    
+    res.setHeader('Content-Type', 'text/html');
+    res.send(modifiedHtml);
+  });
+});
+
+// Add route for attack demonstration tools
+app.get('/waf-demo', (req, res) => {
+  console.log('🧪 Accessing WAF Attack Demo Page');
+  
+  // Read the demo attack tester HTML
+  const fs = require('fs');
+  const path = require('path');
+  const demoPagePath = path.join(__dirname, 'demo-attack-tester.html');
+  
+  fs.readFile(demoPagePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading demo page:', err);
+      return res.status(500).send('Error loading demo page');
+    }
+    
+    res.setHeader('Content-Type', 'text/html');
+    res.send(data);
+  });
+});
+
+// Make demo attack script available
+app.get('/demo-attacks.js', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const scriptPath = path.join(__dirname, 'demo-attacks.js');
+  
+  fs.readFile(scriptPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading demo script:', err);
+      return res.status(500).send('Error loading demo script');
+    }
+    
+    res.setHeader('Content-Type', 'application/javascript');
+    res.send(data);
+  });
 });
 
 // Set up proxy to forward CatchPhish frontend requests with WAF integration
