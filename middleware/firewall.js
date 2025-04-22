@@ -99,23 +99,52 @@ const firewallMiddleware = async (req, res, next) => {
 
 // 🚀 Helper function to log attacks in MongoDB
 const logAttack = async (ip, ruleName, path, userAgent) => {
-    await AttackLog.create({
-        ip,
-        rule_name: ruleName,
-        request_path: path,
-        user_agent: userAgent,
-        timestamp: new Date(),
-    });
+    try {
+        await AttackLog.create({
+            ip_address: ip,
+            request_path: path,
+            request_method: 'Unknown', // We don't have method in the current function params
+            detected_threat: ruleName,
+            user_agent: userAgent,
+            timestamp: new Date(),
+        });
+    } catch (error) {
+        console.error("❌ Error logging attack:", error);
+    }
 };
 
 // 🚀 Helper function to log normal traffic in MongoDB
 const logTraffic = async (ip, path, userAgent) => {
-    await TrafficLog.create({
-        ip,
-        request_path: path,
-        user_agent: userAgent,
-        timestamp: new Date(),
-    });
+    try {
+        // Create a traffic log entry with more details
+        const trafficData = {
+            ip_address: ip,
+            request_path: path,
+            request_method: 'GET', // Default to GET - we'll update this in our proxy
+            status_code: 200, // Default success - we'll update this in our proxy
+            response_time_ms: 0,
+            user_agent: userAgent,
+            origin: 'CatchPhish',
+            timestamp: new Date(),
+            waf_status: 'ALLOWED' // This request passed WAF checks
+        };
+        
+        // Use a try-catch and set a timeout of 5 seconds to prevent long blocking
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Traffic logging timeout')), 5000)
+        );
+        
+        // Race between the DB operation and timeout
+        await Promise.race([
+            TrafficLog.create(trafficData),
+            timeoutPromise
+        ]);
+        
+        console.log(`✅ Traffic logged: ${ip} - ${path}`);
+    } catch (error) {
+        // Don't let logging failures affect the main application flow
+        console.error(`❌ Error logging traffic: ${error.message}`);
+    }
 };
 
 module.exports = { firewallMiddleware, limiter };

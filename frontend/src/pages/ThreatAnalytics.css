@@ -1,0 +1,367 @@
+.threat-analytics {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.background-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  opacity: 0.2;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #1e3254;
+  color: #e0e7ff;
+}
+
+.header-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 0, 255, 0.2) 0%, rgba(3, 190, 252, 0.2) 100%);
+  margin-right: 16px;
+  color: #03befc;
+}
+
+.panel-header h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(3, 190, 252, 0.5);
+  letter-spacing: 1px;
+  flex-grow: 1;
+}
+
+.updated-time {
+  font-size: 0.8rem;
+  color: #99a8c7;
+  font-family: "Rajdhani", monospace;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  width: 100%;
+  color: #03befc;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(3, 190, 252, 0.1);
+  border-radius: 50%;
+  border-top-color: #03befc;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Grid layout for analytics */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-auto-rows: minmax(100px, auto);
+  gap: 20px;
+}
+
+/* Summary statistics cards */
+.summary-stats {
+  grid-column: span 12;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.stat-card {
+  background: rgba(20, 26, 54, 0.7);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #1e3254;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(3, 190, 252, 0.15);
+  border-color: rgba(3, 190, 252, 0.5);
+}
+
+.stat-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  margin-right: 16px;
+}
+
+.stat-info {
+  flex-grow: 1;
+}
+
+.stat-info h3 {
+  font-size: 1.5rem;
+  margin: 0 0 4px 0;
+  color: #e0e7ff;
+  font-weight: 600;
+}
+
+.stat-info p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #99a8c7;
+}
+
+.stat-trend {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stat-trend.up {
+  background-color: rgba(0, 255, 170, 0.1);
+  color: #00ffaa;
+}
+
+.stat-trend.down {
+  background-color: rgba(255, 51, 102, 0.1);
+  color: #ff3366;
+}
+
+/* Chart panels */
+.chart-panel {
+  background: rgba(20, 26, 54, 0.7);
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #1e3254;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.threats-by-type {
+  grid-column: span 4;
+}
+
+.threat-trend {
+  grid-column: span 8;
+}
+
+.targeted-apis {
+  grid-column: span 6;
+}
+
+.threats-by-location {
+  grid-column: span 6;
+}
+
+.panel-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.panel-title h3 {
+  font-size: 1.1rem;
+  margin: 0;
+  color: #e0e7ff;
+}
+
+/* Time selector for trend charts */
+.time-selector {
+  display: flex;
+  align-items: center;
+}
+
+.time-selector button {
+  background: none;
+  border: 1px solid #1e3254;
+  color: #99a8c7;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.time-selector button:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.time-selector button:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.time-selector button.active {
+  background-color: rgba(3, 190, 252, 0.2);
+  color: #03befc;
+  border-color: #03befc;
+}
+
+/* Custom tooltip for charts */
+.custom-tooltip {
+  background-color: rgba(20, 26, 54, 0.9);
+  border: 1px solid #1e3254;
+  border-radius: 4px;
+  padding: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.custom-tooltip .label {
+  color: #e0e7ff;
+  font-weight: 600;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #1e3254;
+  padding-bottom: 4px;
+}
+
+/* API table styling */
+.api-table-container {
+  overflow-y: auto;
+  max-height: 300px;
+  margin-top: 10px;
+}
+
+.api-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #e0e7ff;
+}
+
+.api-table th {
+  text-align: left;
+  padding: 12px;
+  font-size: 0.9rem;
+  color: #99a8c7;
+  border-bottom: 1px solid #1e3254;
+  font-weight: 600;
+}
+
+.api-table td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(30, 50, 84, 0.5);
+  font-size: 0.9rem;
+}
+
+.api-table tr:hover td {
+  background-color: rgba(3, 190, 252, 0.05);
+}
+
+.api-name {
+  display: flex;
+  align-items: center;
+}
+
+.api-name svg {
+  margin-right: 8px;
+  color: #03befc;
+}
+
+.method-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.method-badge.get {
+  background-color: rgba(3, 190, 252, 0.1);
+  color: #03befc;
+}
+
+.method-badge.post {
+  background-color: rgba(0, 255, 170, 0.1);
+  color: #00ffaa;
+}
+
+.method-badge.put {
+  background-color: rgba(255, 204, 0, 0.1);
+  color: #ffcc00;
+}
+
+.method-badge.delete {
+  background-color: rgba(255, 51, 102, 0.1);
+  color: #ff3366;
+}
+
+.threat-level-indicator {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.threat-level-indicator[data-level="Critical"] {
+  background-color: rgba(255, 51, 102, 0.1);
+  color: #ff3366;
+}
+
+.threat-level-indicator[data-level="High"] {
+  background-color: rgba(255, 153, 0, 0.1);
+  color: #ff9900;
+}
+
+.threat-level-indicator[data-level="Medium"] {
+  background-color: rgba(255, 204, 0, 0.1);
+  color: #ffcc00;
+}
+
+.threat-level-indicator[data-level="Low"] {
+  background-color: rgba(3, 190, 252, 0.1);
+  color: #03befc;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .threats-by-type, .threats-by-location {
+    grid-column: span 6;
+  }
+  
+  .threat-trend, .targeted-apis {
+    grid-column: span 12;
+  }
+}
+
+@media (max-width: 768px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .threats-by-type, .threats-by-location, .threat-trend, .targeted-apis {
+    grid-column: span 1;
+  }
+  
+  .summary-stats {
+    grid-template-columns: 1fr;
+  }
+} 

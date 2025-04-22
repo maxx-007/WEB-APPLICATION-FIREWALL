@@ -6,9 +6,13 @@ import FirewallRules from "./pages/FirewallRules";
 import AttackLogs from "./pages/AttackLogs";
 import LiveTraffic from "./pages/LiveTraffic";
 import UserManagement from './pages/UserManagement';
+import ThreatAnalytics from './pages/ThreatAnalytics';
+import APISecurityPage from './pages/APISecurityPage';
+import IPManagement from './pages/IPManagement';
+import Settings from './pages/Settings';
 import ProtectedRoute from './pages/ProtectedRoute';
 import Login from "./pages/Login";
-import { verifyToken, setAuthToken } from "./services/api"; // Import from the correct locationimport "./index.css";  // Ensure Tailwind is loaded first
+import { verifyToken, setAuthToken, logout } from "./services/api"; // Import from the correct locationimport "./index.css";  // Ensure Tailwind is loaded first
 import "./App.css";  // Your custom styles
 
 function App() {
@@ -54,11 +58,28 @@ function App() {
     setUser(userData);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    setAuthToken(null);
-    setIsAuthenticated(false);
-    setUser(null);
+  const handleLogout = async () => {
+    try {
+      // First call the logout API to invalidate the session on the server
+      await logout();
+      
+      // Then clear local state
+      localStorage.removeItem('authToken');
+      setAuthToken(null);
+      setIsAuthenticated(false);
+      setUser(null);
+      
+      // Use window.location for navigation instead of React Router
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Even if API call fails, continue with local logout
+      localStorage.removeItem('authToken');
+      setAuthToken(null);
+      setIsAuthenticated(false);
+      setUser(null);
+      window.location.href = "/login";
+    }
   };
 
   if (isLoading) {
@@ -76,7 +97,7 @@ function App() {
               path="/login"
               element={
                 isAuthenticated ?
-                <Navigate to="/dashboard" replace /> :
+                <Navigate to="/dashboard" replace={true} state={{from: '/login'}} /> :
                 <Login setIsAuthenticated={setIsAuthenticated} onLogin={handleLogin} />
               }
             />
@@ -87,6 +108,10 @@ function App() {
               <Route path="/firewall-rules" element={<FirewallRules />} />
               <Route path="/logs" element={<AttackLogs />} />
               <Route path="/live-traffic" element={<LiveTraffic />} />
+              <Route path="/threat-analytics" element={<ThreatAnalytics />} />
+              <Route path="/api-security" element={<APISecurityPage />} />
+              <Route path="/ip-management" element={<IPManagement />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
            
             {/* Admin-only routes */}
@@ -99,17 +124,32 @@ function App() {
                 />
               }
             >
-              <Route path="/users" element={<UserManagement />} />
+              <Route path="/user-management" element={<UserManagement />} />
             </Route>
            
             {/* Default redirect - this should be LAST */}
             <Route
               path="/"
-              element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
+              element={
+                <Navigate 
+                  to={isAuthenticated ? "/dashboard" : "/login"} 
+                  replace={true} 
+                  state={{from: '/'}}
+                />
+              }
             />
            
             {/* Catch all other routes */}
-            <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
+            <Route 
+              path="*" 
+              element={
+                <Navigate 
+                  to={isAuthenticated ? "/dashboard" : "/login"} 
+                  replace={true}
+                  state={{from: window.location.pathname}}
+                />
+              } 
+            />
           </Routes>
         </div>
       </div>

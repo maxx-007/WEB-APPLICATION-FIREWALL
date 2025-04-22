@@ -17,6 +17,8 @@ function ProtectedRoute({ requireAdmin = false }) {
           console.log("No token found, not authenticated");
           setIsAuthenticated(false);
           setIsLoading(false);
+          // For critical security issues, using direct location approach
+          window.location.href = "/login";
           return;
         }
         
@@ -35,6 +37,8 @@ function ProtectedRoute({ requireAdmin = false }) {
           localStorage.removeItem('userRole');
           setIsAuthenticated(false);
           setIsLoading(false);
+          // For critical security issues, using direct location approach
+          window.location.href = "/login";
           return;
         }
         
@@ -51,6 +55,8 @@ function ProtectedRoute({ requireAdmin = false }) {
         localStorage.removeItem('userRole');
         setIsAuthenticated(false);
         setIsLoading(false);
+        // For critical security issues, using direct location approach
+        window.location.href = "/login";
       }
     }
     
@@ -67,15 +73,16 @@ function ProtectedRoute({ requireAdmin = false }) {
   }
   
   if (!isAuthenticated) {
-    // Redirect to login if not authenticated
+    // Use Navigate for regular redirects when it's already determined the user
+    // isn't authenticated but the page is still loading
     console.log("Not authenticated, redirecting to login");
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace={true} />;
   }
   
   if (requireAdmin && !isAdmin) {
     // Redirect to dashboard if not admin
     console.log("Admin access required but user is not admin");
-    return <Navigate to="/dashboard" state={{ from: location }} replace />;
+    return <Navigate to="/dashboard" state={{ from: location }} replace={true} />;
   }
   
   // Render child routes if authenticated

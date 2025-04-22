@@ -1,8 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import { Shield, MonitorX, Terminal, Activity, Database, Settings, Users, AlertTriangle, Server } from "lucide-react";
+import { Shield, MonitorX, Terminal, Activity, Database, Settings, Users, AlertTriangle, Server, LogOut } from "lucide-react";
 import "../styles.css";
 
-function Sidebar() {
+function Sidebar({ onLogout }) {
   const location = useLocation();
   
   // Function to check if a path is active
@@ -98,6 +98,11 @@ function Sidebar() {
             <span className="stat-label">Threats Blocked Today</span>
           </div>
         </div>
+        
+        <button onClick={onLogout} className="logout-button">
+          <LogOut size={16} />
+          <span>Logout</span>
+        </button>
       </div>
     </div>
   );

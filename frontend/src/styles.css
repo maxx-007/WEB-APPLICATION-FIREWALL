@@ -148,6 +148,9 @@ body {
   background: linear-gradient(0deg, #101224 0%, rgba(16, 18, 36, 0.8) 100%);
   border-top: 1px solid #1e3254;
   margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .protection-stats {
@@ -173,6 +176,33 @@ body {
 .stat-label {
   font-size: 0.8rem;
   color: #99a8c7;
+}
+
+/* Logout button styling */
+.logout-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(255, 51, 102, 0.1);
+  border: 1px solid rgba(255, 51, 102, 0.3);
+  border-radius: 8px;
+  color: #ff3366;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.logout-button:hover {
+  background: rgba(255, 51, 102, 0.2);
+  border-color: rgba(255, 51, 102, 0.5);
+  transform: translateY(-2px);
+}
+
+.logout-button svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Main Content Styling */

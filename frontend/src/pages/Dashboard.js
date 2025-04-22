@@ -338,10 +338,8 @@ const Dashboard = () => {
               // Update auth state before navigation
               setAuthToken(null); // This is imported from your services/api
               
-              // Wait a tiny bit to avoid rapid state changes
-              setTimeout(() => {
-                  navigate("/login");
-              }, 50);
+              // Replace the navigate with window.location approach to avoid the security error
+              window.location.href = "/login";
           }, 400);
       } catch (error) {
           console.error("Logout failed:", error);
