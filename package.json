@@ -4,11 +4,15 @@
   "description": "WAF Proxy for CatchPhish application",
   "main": "proxy.js",
   "scripts": {
-    "start": "node proxy.js",
-    "dev": "nodemon proxy.js",
+    "start": "node server.js",
+    "start:production": "npm run build:frontend && node start.js",
+    "start:proxy": "node proxy.js",
+    "dev": "nodemon server.js",
+    "dev:proxy": "nodemon proxy.js",
     "check": "node check-services.js",
-    "check-and-start": "node check-services.js && node proxy.js",
-    "start-all": "node check-services.js --start"
+    "setup": "node database-init.js",
+    "build:frontend": "cd frontend && npm install && npm run build && cd ..",
+    "test": "echo \"No test specified\" && exit 0"
   },
   "dependencies": {
     "express": "^4.17.1",

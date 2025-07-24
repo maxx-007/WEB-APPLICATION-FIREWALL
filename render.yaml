@@ -1,0 +1,52 @@
+services:
+  - type: web
+    name: waf-backend
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MYSQL_HOST
+        fromService:
+          type: mysql
+          name: waf-mysql
+          property: host
+      - key: MYSQL_USER
+        fromService:
+          type: mysql
+          name: waf-mysql
+          property: user
+      - key: MYSQL_PASSWORD
+        fromService:
+          type: mysql
+          name: waf-mysql
+          property: password
+      - key: MYSQL_DATABASE
+        fromService:
+          type: mysql
+          name: waf-mysql
+          property: database
+      - key: MONGODB_URI
+        fromService:
+          type: redis
+          name: waf-mongodb
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        value: admin123!@#secure
+    healthCheckPath: /health
+
+  - type: mysql
+    name: waf-mysql
+    plan: starter
+    databaseName: waf_production
+    user: waf_user
+
+databases:
+  - name: waf-mysql
+    plan: starter

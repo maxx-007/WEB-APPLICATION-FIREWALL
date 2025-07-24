@@ -1,10 +1,36 @@
 const express = require('express');
-const db = require('./config/dbMySQL'); // Adjust the path if necessary
+const path = require('path');
+const { db, dbPromise } = require('./config/dbMySQL'); // Adjust the path if necessary
 const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
+
+// Validate required environment variables
+const requiredEnvVars = ['MYSQL_HOST', 'MYSQL_USER', 'MYSQL_PASSWORD', 'MYSQL_DATABASE', 'MONGODB_URI', 'JWT_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+    console.error(`❌ Missing required environment variables: ${missingEnvVars.join(', ')}`);
+    console.error('Please check your .env file and ensure all required variables are set.');
+    process.exit(1);
+}
+
 const { firewallMiddleware, limiter }= require('./middleware/firewall');
 const app = express();
+
+// Security headers middleware
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+    
+    // Remove server information
+    res.removeHeader('X-Powered-By');
+    
+    next();
+});
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
@@ -22,10 +48,18 @@ require('./config/dbMongo');
 
 
 // Middleware Setup
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '10mb' })); // Limit request body size
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 app.use(limiter);
-// Apply firewall middleware globally
-app.use(firewallMiddleware);
+
+// Apply firewall middleware globally (but not to health checks)
+app.use((req, res, next) => {
+    // Skip firewall for health check endpoints
+    if (req.path === '/health' || req.path === '/') {
+        return next();
+    }
+    return firewallMiddleware(req, res, next);
+});
 
 // Mongoose Setup for logging blocked requests
 // Define a schema for logging blocked requests
@@ -132,14 +166,67 @@ const adminMiddleware = (req, res, next) => {
 // Import API Routes
 const firewallRoutes = require('./routes/firewall');
 const logsRoutes = require('./routes/logs');
+const ipRoutes = require('./routes/ip');
 
 // Register API Routes - Now with authentication
 app.use("/firewall", authMiddleware, firewallRoutes);
 app.use("/logs", authMiddleware, logsRoutes);
+app.use("/ip", authMiddleware, ipRoutes);
+
+// Serve React frontend in production
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, 'frontend/build')));
+    
+    // Catch all handler for React Router
+    app.get('*', (req, res) => {
+        // Skip API routes
+        if (req.path.startsWith('/api') || req.path.startsWith('/login') || req.path.startsWith('/health') || 
+            req.path.startsWith('/firewall') || req.path.startsWith('/logs') || req.path.startsWith('/ip')) {
+            return res.status(404).json({ error: 'API endpoint not found' });
+        }
+        res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
+    });
+}
+
+// Health Check Route (for production monitoring)
+app.get("/health", async (req, res) => {
+    try {
+        // Test database connections
+        await dbPromise.execute("SELECT 1");
+        await mongoose.connection.db.admin().ping();
+        
+        res.status(200).json({
+            status: "healthy",
+            timestamp: new Date().toISOString(),
+            services: {
+                mysql: "connected",
+                mongodb: "connected",
+                firewall: "active"
+            }
+        });
+    } catch (error) {
+        res.status(503).json({
+            status: "unhealthy",
+            timestamp: new Date().toISOString(),
+            error: error.message
+        });
+    }
+});
 
 // Default Route
 app.get("/", (req, res) => {
-    res.send("🔥 WAF API Running...");
+    res.json({
+        name: "Web Application Firewall API",
+        version: "1.0.0",
+        status: "running",
+        endpoints: {
+            health: "/health",
+            login: "/login",
+            firewall: "/firewall/*",
+            logs: "/logs/*",
+            ip: "/ip/*"
+        }
+    });
 });
 
 // Login Route
@@ -214,19 +301,19 @@ app.get("/verify-token", authMiddleware, (req, res) => {
     });
 });
 
-app.get("/api/firewall-rules", (req, res) => {
-    db.query("SELECT * FROM firewall_rules", (err, results) => {
-        if (err) {
-            console.error("❌ Error fetching firewall rules:", err);
-            return res.status(500).json({ error: "Internal Server Error" });
-        }
+app.get("/api/firewall-rules", async (req, res) => {
+    try {
+        const [results] = await dbPromise.execute("SELECT * FROM firewall_rules");
         res.json(results);
-    });
+    } catch (err) {
+        console.error("❌ Error fetching firewall rules:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
 });
 
 router.get("/api/firewall-rules", async (req, res) => {
     try {
-        const [rules] = await db.promise().query("SELECT * FROM firewall_rules");
+        const [rules] = await dbPromise.execute("SELECT * FROM firewall_rules");
         res.json(rules);
     } catch (err) {
         res.status(500).json({ error: "Database Error", details: err.message });
@@ -319,7 +406,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     try {
-        await db.query("SELECT 1"); // Test MySQL connection
+        await dbPromise.execute("SELECT 1"); // Test MySQL connection
         console.log("✅ MySQL Connected...");
     } catch (error) {
         console.error("❌ MySQL Connection Error:", error);
