@@ -36,7 +36,7 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const router = express.Router();
 app.use(cors({ 
-    origin: ["http://localhost:3000", "https://web-application-firewall-ecru.vercel.app"], 
+    origin: ["http://localhost:3000", "https://web-application-firewall-five.vercel.app"], 
     credentials: true 
 }));
 // Database Connections

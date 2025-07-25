@@ -48,7 +48,9 @@ function WAFLogin() {
       }, 1600);
       
       // Actual API call to backend
-      const apiUrl = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+      const apiUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://web-application-firewall-wqkd.onrender.com'
+        : 'http://localhost:5000';
       const response = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: {

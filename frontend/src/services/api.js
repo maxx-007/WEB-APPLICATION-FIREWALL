@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000"; // Adjust this if your backend runs on a different port
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? "https://web-application-firewall-wqkd.onrender.com" 
+  : "http://localhost:5000";
 
 // Create axios instance with default config
 const api = axios.create({
