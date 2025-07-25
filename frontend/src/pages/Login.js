@@ -48,7 +48,8 @@ function WAFLogin() {
       }, 1600);
       
       // Actual API call to backend
-      const response = await fetch('http://localhost:5000/login', {
+      const apiUrl = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
