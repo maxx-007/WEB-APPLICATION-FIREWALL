@@ -85,11 +85,17 @@ const firewallMiddleware = async (req, res, next) => {
             let matchedRule = null;
 
             for (let rule of rules) {
-                const regex = new RegExp(rule.rule_pattern, "i"); // Case-insensitive regex match
-                if (regex.test(requestPath) || regex.test(requestBody)) {
-                    isBlocked = true;
-                    matchedRule = rule;
-                    break;
+                try {
+                    const regex = new RegExp(rule.rule_pattern, "i"); // Case-insensitive regex match
+                    if (regex.test(requestPath) || regex.test(requestBody)) {
+                        isBlocked = true;
+                        matchedRule = rule;
+                        break;
+                    }
+                } catch (regexError) {
+                    console.error(`❌ Invalid regex pattern in rule "${rule.rule_name}": ${rule.rule_pattern}`, regexError.message);
+                    // Skip this rule and continue with the next one
+                    continue;
                 }
             }
 
