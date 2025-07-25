@@ -174,19 +174,7 @@ app.use("/logs", authMiddleware, logsRoutes);
 app.use("/ip", authMiddleware, ipRoutes);
 
 // Serve React frontend in production
-if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, 'frontend/build')));
-    
-    // Catch all handler for React Router
-    app.get('*', (req, res) => {
-        // Skip API routes
-        if (req.path.startsWith('/api') || req.path.startsWith('/login') || req.path.startsWith('/health') || 
-            req.path.startsWith('/firewall') || req.path.startsWith('/logs') || req.path.startsWith('/ip')) {
-            return res.status(404).json({ error: 'API endpoint not found' });
-        }
-        res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
-    });
-}
+
 
 // Health Check Route (for production monitoring)
 app.get("/health", async (req, res) => {
