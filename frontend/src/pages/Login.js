@@ -90,6 +90,10 @@ function WAFLogin({ onLogin }) {
         // Check tokens were stored successfully
         console.log("Stored token:", localStorage.getItem('authToken'));
         console.log("Stored role:", localStorage.getItem('userRole'));
+        console.log("LocalStorage contents:", {
+          authToken: localStorage.getItem('authToken'),
+          userRole: localStorage.getItem('userRole')
+        });
         
         // Update App.js authentication state
         if (onLogin) {

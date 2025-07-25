@@ -103,7 +103,7 @@ function App() {
             />
            
             {/* Protected routes */}
-            <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+            <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} userRole={user?.role} />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/firewall-rules" element={<FirewallRules />} />
               <Route path="/logs" element={<AttackLogs />} />

@@ -1,69 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
-function ProtectedRoute({ requireAdmin = false }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+function ProtectedRoute({ isAuthenticated, requireAdmin = false, userRole }) {
   const location = useLocation();
   
-  useEffect(() => {
-    async function verifyAuth() {
-      try {
-        const token = localStorage.getItem('authToken');
-        console.log("Checking auth with token:", token?.substring(0, 15) + "...");
-        
-        if (!token) {
-          console.log("No token found, not authenticated");
-          setIsAuthenticated(false);
-          setIsLoading(false);
-          // For critical security issues, using direct location approach
-          window.location.href = "/login";
-          return;
-        }
-        
-        // Verify token with backend
-        const response = await fetch('http://localhost:5000/verify-token', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        console.log("Verification response status:", response.status);
-        
-        if (!response.ok) {
-          console.log("Token verification failed");
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('userRole');
-          setIsAuthenticated(false);
-          setIsLoading(false);
-          // For critical security issues, using direct location approach
-          window.location.href = "/login";
-          return;
-        }
-        
-        const data = await response.json();
-        console.log("Token verification successful:", data);
-        
-        setIsAuthenticated(true);
-        setIsAdmin(data.user.role === 'admin');
-        console.log(`User authenticated, admin: ${data.user.role === 'admin'}`);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Auth verification error:', error);
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userRole');
-        setIsAuthenticated(false);
-        setIsLoading(false);
-        // For critical security issues, using direct location approach
-        window.location.href = "/login";
-      }
-    }
-    
-    verifyAuth();
-  }, []);
+  console.log("ProtectedRoute - isAuthenticated:", isAuthenticated, "userRole:", userRole);
   
-  if (isLoading) {
+  if (isAuthenticated === null) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
@@ -73,14 +16,11 @@ function ProtectedRoute({ requireAdmin = false }) {
   }
   
   if (!isAuthenticated) {
-    // Use Navigate for regular redirects when it's already determined the user
-    // isn't authenticated but the page is still loading
     console.log("Not authenticated, redirecting to login");
     return <Navigate to="/login" state={{ from: location }} replace={true} />;
   }
   
-  if (requireAdmin && !isAdmin) {
-    // Redirect to dashboard if not admin
+  if (requireAdmin && userRole !== 'admin') {
     console.log("Admin access required but user is not admin");
     return <Navigate to="/dashboard" state={{ from: location }} replace={true} />;
   }
