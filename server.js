@@ -34,6 +34,9 @@ app.use((req, res, next) => {
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+
+// Fix mongoose deprecation warning
+mongoose.set('strictQuery', false);
 const router = express.Router();
 app.use(cors({ 
     origin: ["http://localhost:3000", "https://web-application-firewall-five.vercel.app"], 
@@ -176,20 +179,7 @@ app.use("/firewall", authMiddleware, firewallRoutes);
 app.use("/logs", authMiddleware, logsRoutes);
 app.use("/ip", authMiddleware, ipRoutes);
 
-// Serve React frontend in production
-if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, 'frontend/build')));
-    
-    // Catch all handler for React Router
-    app.get('*', (req, res) => {
-        // Skip API routes
-        if (req.path.startsWith('/api') || req.path.startsWith('/login') || req.path.startsWith('/health') || 
-            req.path.startsWith('/firewall') || req.path.startsWith('/logs') || req.path.startsWith('/ip')) {
-            return res.status(404).json({ error: 'API endpoint not found' });
-        }
-        res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
-    });
-}
+// Frontend is served separately on Vercel, so we don't serve static files here
 
 // Health Check Route (for production monitoring)
 app.get("/health", async (req, res) => {
