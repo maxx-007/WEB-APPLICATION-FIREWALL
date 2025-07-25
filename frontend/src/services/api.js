@@ -1,12 +1,9 @@
 import axios from "axios";
-
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? "https://web-application-firewall-wqkd.onrender.com" 
-  : "http://localhost:5000";
+import { API_CONFIG } from "../config/api";
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_CONFIG.BASE_URL,
   withCredentials: true // Important for cookies
 });
 

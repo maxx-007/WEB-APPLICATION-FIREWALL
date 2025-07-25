@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 function ProtectedRoute({ isAuthenticated, requireAdmin = false, userRole }) {

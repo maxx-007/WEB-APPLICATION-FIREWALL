@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_CONFIG } from '../config/api';
 import './UserManagement.css';
 
 function UserManagement() {
@@ -22,7 +23,7 @@ function UserManagement() {
       setLoading(true);
       const token = localStorage.getItem('authToken');
       
-      const response = await fetch('http://localhost:5000/users', {
+      const response = await fetch(API_CONFIG.getUrl('/users'), {
         headers: {
           'Authorization': `Bearer ${token}`
         },
@@ -48,7 +49,7 @@ function UserManagement() {
     try {
       const token = localStorage.getItem('authToken');
       
-      const response = await fetch('http://localhost:5000/users', {
+      const response = await fetch(API_CONFIG.getUrl('/users'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +85,7 @@ function UserManagement() {
     try {
       const token = localStorage.getItem('authToken');
       
-      const response = await fetch(`http://localhost:5000/users/${userId}`, {
+      const response = await fetch(API_CONFIG.getUrl(`/users/${userId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

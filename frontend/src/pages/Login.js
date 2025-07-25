@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_CONFIG } from '../config/api';
 import './WAFLogin.css';
 
 function WAFLogin({ onLogin }) {
@@ -48,10 +49,7 @@ function WAFLogin({ onLogin }) {
       }, 1600);
       
       // Actual API call to backend
-      const apiUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://web-application-firewall-wqkd.onrender.com'
-        : 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/login`, {
+      const response = await fetch(API_CONFIG.getUrl('/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
