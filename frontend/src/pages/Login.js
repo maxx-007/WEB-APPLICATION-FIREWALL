@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './WAFLogin.css';
 
-function WAFLogin() {
+function WAFLogin({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -91,8 +91,15 @@ function WAFLogin() {
         console.log("Stored token:", localStorage.getItem('authToken'));
         console.log("Stored role:", localStorage.getItem('userRole'));
         
+        // Update App.js authentication state
+        if (onLogin) {
+          onLogin(data.user, data.token);
+        }
+        
         // Navigate immediately
+        console.log("About to navigate to dashboard...");
         navigate('/dashboard');
+        console.log("Navigation called");
       } else {
         throw new Error('No token received from server');
       }
