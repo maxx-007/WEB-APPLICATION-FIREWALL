@@ -1,4 +1,4 @@
-const db = require("../config/dbMySQL");
+const { db, dbPromise } = require("../config/dbMySQL");
 const AttackLog = require("../models/attackLog");
 const TrafficLog = require("../models/trafficLog");
 const rateLimit = require("express-rate-limit");
@@ -34,14 +34,20 @@ const firewallMiddleware = async (req, res, next) => {
 
         console.log(`🌐 Inspecting request: ${clientIP} - ${requestPath}`);
 
-        // 🚨 Check for Blacklisted IPs
-        db.query("SELECT ip FROM blocked_ips WHERE ip = ?", [clientIP], async (err, result) => {
-            if (err) {
-                console.error("❌ Error fetching blocked IPs:", err);
-                return res.status(500).json({ error: "Internal Firewall Error" });
+        // 🚨 First check if IP is whitelisted (skip all checks if whitelisted)
+        try {
+            const [whitelisted] = await dbPromise.execute("SELECT ip FROM whitelist_ips WHERE ip = ?", [clientIP]);
+            if (whitelisted.length > 0) {
+                console.log(`✅ Whitelisted IP allowed: ${clientIP}`);
+                await logTraffic(clientIP, requestPath, userAgent);
+                return next();
             }
-            if (result.length > 0) {
+
+            // 🚨 Check for Blacklisted IPs
+            const [blocked] = await dbPromise.execute("SELECT ip, expires_at FROM blocked_ips WHERE ip = ? AND (expires_at IS NULL OR expires_at > NOW())", [clientIP]);
+            if (blocked.length > 0) {
                 console.warn(`🚨 Blocked request from Blacklisted IP: ${clientIP}`);
+                await logAttack(clientIP, "Blacklisted IP", requestPath, userAgent);
                 return res.redirect('/block.html?attack=blacklisted_ip');
             }
 
@@ -72,36 +78,36 @@ const firewallMiddleware = async (req, res, next) => {
                 return res.redirect('/block.html?attack=malicious_tool');
             }
 
-            // 🚨 Fetch Firewall Rules from MySQL & Apply them
-            db.query("SELECT * FROM firewall_rules", async (err, rules) => {
-                if (err) {
-                    console.error("❌ Error fetching firewall rules:", err);
-                    return res.status(500).json({ error: "Internal Firewall Error" });
+            // 🚨 Fetch Active Firewall Rules from MySQL & Apply them
+            const [rules] = await dbPromise.execute("SELECT * FROM firewall_rules WHERE is_active = TRUE ORDER BY severity DESC");
+            
+            let isBlocked = false;
+            let matchedRule = null;
+
+            for (let rule of rules) {
+                const regex = new RegExp(rule.rule_pattern, "i"); // Case-insensitive regex match
+                if (regex.test(requestPath) || regex.test(requestBody)) {
+                    isBlocked = true;
+                    matchedRule = rule;
+                    break;
                 }
+            }
 
-                let blocked = false;
-                let matchedRule = null;
+            if (isBlocked) {
+                console.warn(`🚨 Blocked request from ${clientIP} due to rule: ${matchedRule.rule_name}`);
+                await logAttack(clientIP, matchedRule.rule_name, requestPath, userAgent);
+                return res.redirect('/block.html?attack=' + encodeURIComponent(matchedRule.rule_name));
+            }
 
-                for (let rule of rules) {
-                    const regex = new RegExp(rule.rule_pattern, "i"); // Case-insensitive regex match
-                    if (regex.test(requestPath) || regex.test(requestBody)) {
-                        blocked = true;
-                        matchedRule = rule;
-                        break;
-                    }
-                }
-
-                if (blocked) {
-                    console.warn(`🚨 Blocked request from ${clientIP} due to rule: ${matchedRule.rule_name}`);
-                    await logAttack(clientIP, matchedRule.rule_name, requestPath, userAgent);
-                    return res.redirect('/block.html?attack=' + encodeURIComponent(matchedRule.rule_name));
-                }
-
-                // 🚀 Log normal traffic
-                await logTraffic(clientIP, requestPath, userAgent);
-                next();
-            });
-        });
+            // 🚀 Log normal traffic
+            await logTraffic(clientIP, requestPath, userAgent);
+            next();
+            
+        } catch (dbError) {
+            console.error("❌ Database error in firewall:", dbError);
+            // Allow request to continue even if database fails
+            next();
+        }
 
     } catch (err) {
         console.error("❌ Firewall Middleware Error:", err);
