@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "start:production": "npm run build:frontend && node start.js",
+    "start:render": "node fix-database.js && node server.js",
     "start:proxy": "node proxy.js",
     "dev": "nodemon server.js",
     "dev:proxy": "nodemon proxy.js",

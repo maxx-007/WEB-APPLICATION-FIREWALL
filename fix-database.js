@@ -6,7 +6,17 @@ require('dotenv').config();
 
 async function fixRegexPatterns() {
     try {
-        console.log('🔧 Fixing malformed regex patterns...');
+        console.log('🔧 Checking and fixing malformed regex patterns...');
+        
+        // Check if fix is needed first
+        const [existingRules] = await dbPromise.execute(
+            "SELECT COUNT(*) as count FROM firewall_rules WHERE rule_name = 'NoSQL Injection - MongoDB' AND rule_pattern LIKE '%|||%'"
+        );
+        
+        if (existingRules[0].count === 0) {
+            console.log('✅ No malformed regex patterns found - skipping fix');
+            return;
+        }
         
         // Delete malformed rule
         await dbPromise.execute(
