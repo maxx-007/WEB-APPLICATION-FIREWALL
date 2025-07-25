@@ -58,8 +58,14 @@ function WAFLogin() {
         credentials: 'include'
       });
       
-      const data = await response.json();
-      console.log("Login response:", data);
+      let data;
+      try {
+        data = await response.json();
+        console.log("Login response:", data);
+      } catch (jsonError) {
+        console.error("Failed to parse JSON response:", jsonError);
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      }
       
       if (!response.ok) {
         throw new Error(data.error || 'Authentication failed');
