@@ -22,7 +22,6 @@ const Dashboard = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [systemStatus, setSystemStatus] = useState("SECURE");
     const [threatLevel, setThreatLevel] = useState(Math.floor(Math.random() * 20)); // Random initial threat level
-    const navigate = useNavigate();
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
     const animationFrameRef = useRef(null);

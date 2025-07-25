@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Shield, MonitorX, Terminal, Activity, Database, Settings, Users, AlertTriangle, Server, LogOut } from "lucide-react";
+import { Shield, Terminal, Activity, Database, Settings, Users, AlertTriangle, Server, LogOut } from "lucide-react";
 import "../styles.css";
 
 function Sidebar({ onLogout }) {
