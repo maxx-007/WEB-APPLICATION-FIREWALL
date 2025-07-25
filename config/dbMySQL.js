@@ -5,9 +5,11 @@ const db = mysql.createConnection({
     host: process.env.MYSQL_HOST,
     user: process.env.MYSQL_USER,
     password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE
+    database: process.env.MYSQL_DATABASE,
+    port: process.env.MYSQL_PORT || 3306 // fallback for local
 });
 
+// Test connection
 db.connect(err => {
     if (err) {
         console.error("❌ MySQL Connection Error:", err);
@@ -16,4 +18,7 @@ db.connect(err => {
     }
 });
 
-module.exports = db;
+// Create promise wrapper
+const dbPromise = db.promise();
+
+module.exports = { db, dbPromise };
